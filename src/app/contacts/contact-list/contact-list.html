@@ -1,0 +1,22 @@
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">
+      Contacts
+      <a class="btn btn-success pull-right" href="#">New Contact</a>
+    </h3>
+  </div>
+  <div class="panel-body">
+    @for (contact of contacts; track contact.id) {
+      <a href="#" class="list-group-item">
+        <div class="row">
+          <div class="col-md-10">
+            <h4 class="list-group-item-heading">{{ contact.name }}</h4>
+          </div>
+          <div class="col-md-2">
+            <img [src]="contact.imageUrl" alt="{{ contact.name }}" class="img-rounded contact-image">
+          </div>
+        </div>
+      </a>
+    }
+  </div>
+</div>
