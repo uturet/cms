@@ -1,0 +1,8 @@
+.contact-image {
+  max-height: 50px;
+}
+
+.list-group-item {
+  margin-bottom: 5px;
+  cursor: pointer;
+}
