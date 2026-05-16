@@ -1,0 +1,17 @@
+<div class="panel panel-default">
+  @if (document; as d) {
+    <div class="panel-heading">
+      <h3>{{ d.name }}</h3>
+      <div class="row">
+        <div class="col-md-8 text-right">
+          <a class="btn btn-primary" href="#">Edit</a>
+          <a class="btn btn-danger" href="#">Delete</a>
+        </div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <p><strong>Description:</strong> {{ d.description }}</p>
+      <p><strong>URL:</strong> <a [href]="d.url" target="_blank">{{ d.url }}</a></p>
+    </div>
+  }
+</div>
