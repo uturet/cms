@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ContactList } from './contact-list/contact-list';
 import { ContactDetail } from './contact-detail/contact-detail';
 import { Contact } from './contact.model';
+import { ContactService } from './contact.service';
 
 @Component({
   selector: 'app-contacts',
@@ -9,6 +10,14 @@ import { Contact } from './contact.model';
   templateUrl: './contacts.html',
   styleUrl: './contacts.css',
 })
-export class Contacts {
+export class Contacts implements OnInit {
   selectedContact: Contact | null = null;
+
+  constructor(private contactService: ContactService) {}
+
+  ngOnInit() {
+    this.contactService.contactSelectedEvent.subscribe((contact: Contact) => {
+      this.selectedContact = contact;
+    });
+  }
 }
