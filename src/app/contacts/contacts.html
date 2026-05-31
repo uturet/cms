@@ -3,8 +3,6 @@
     <app-contact-list></app-contact-list>
   </div>
   <div class="col-md-4">
-    @if (selectedContact) {
-      <app-contact-detail [contact]="selectedContact"></app-contact-detail>
-    }
+    <router-outlet></router-outlet>
   </div>
 </div>

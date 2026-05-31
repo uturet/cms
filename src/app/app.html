@@ -1,13 +1,8 @@
-<app-header (selectedFeatureEvent)="switchView($event)"></app-header>
+<app-header></app-header>
 <div class="container pull-left">
-  @if (selectedFeature === 'documents') {
-    <app-documents></app-documents>
-  }
-  @if (selectedFeature === 'messages') {
-    <app-message-list></app-message-list>
-  }
-  @if (selectedFeature === 'contacts') {
-    <app-contacts></app-contacts>
-  }
+  <div class="row">
+    <div class="col-md-12">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
 </div>
-<router-outlet />

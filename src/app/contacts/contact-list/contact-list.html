@@ -2,14 +2,12 @@
   <div class="panel-heading">
     <h3 class="panel-title">
       Contacts
-      <a class="btn btn-success pull-right" href="#">New Contact</a>
+      <a class="btn btn-success pull-right" [routerLink]="['/contacts', 'new']">New Contact</a>
     </h3>
   </div>
   <div class="panel-body">
     @for (contact of contacts; track contact.id) {
-      <app-contact-item
-        [contact]="contact"
-        (click)="onSelected(contact)">
+      <app-contact-item [contact]="contact">
       </app-contact-item>
     }
   </div>

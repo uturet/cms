@@ -7,28 +7,14 @@
           <img [src]="c.imageUrl" alt="{{ c.name }}" class="img-rounded contact-detail-image">
         </div>
         <div class="col-md-8 text-right">
-          <a class="btn btn-primary" href="#">Edit</a>
-          <a class="btn btn-danger" href="#">Delete</a>
+          <a class="btn btn-primary" [routerLink]="['/contacts', c.id, 'edit']">Edit</a>
+          <a class="btn btn-danger" (click)="onDelete()">Delete</a>
         </div>
       </div>
     </div>
     <div class="panel-body">
       <p><strong>Email:</strong> {{ c.email }}</p>
       <p><strong>Phone:</strong> {{ c.phone }}</p>
-    </div>
-  } @else {
-    <div class="panel-heading">
-      <div class="row">
-        <div class="col-md-4"></div>
-        <div class="col-md-8 text-right">
-          <a class="btn btn-primary" href="#">Edit</a>
-          <a class="btn btn-danger" href="#">Delete</a>
-        </div>
-      </div>
-    </div>
-    <div class="panel-body">
-      <p><strong>Email:</strong></p>
-      <p><strong>Phone:</strong></p>
     </div>
   }
 </div>
