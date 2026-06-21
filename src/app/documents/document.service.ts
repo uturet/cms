@@ -1,24 +1,50 @@
 import { EventEmitter, Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { Document } from './document.model';
-import { MOCKDOCUMENTS } from './MOCKDOCUMENTS';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DocumentService {
+  private dbUrl =
+    'https://wdd430-c0c69-default-rtdb.firebaseio.com/documents.json';
+
   documents: Document[] = [];
   documentSelectedEvent = new EventEmitter<Document>();
   documentListChangedEvent = new Subject<Document[]>();
   maxDocumentId: number = 0;
 
-  constructor() {
-    this.documents = MOCKDOCUMENTS;
-    this.maxDocumentId = this.getMaxId();
+  constructor(private http: HttpClient) {}
+
+  getDocuments() {
+    this.http
+      .get<Document[]>(this.dbUrl)
+      .subscribe(
+        // success method
+        (documents: Document[]) => {
+          this.documents = documents ?? [];
+          this.maxDocumentId = this.getMaxId();
+          this.documents.sort((a, b) =>
+            a.name < b.name ? -1 : a.name > b.name ? 1 : 0
+          );
+          this.documentListChangedEvent.next(this.documents.slice());
+        },
+        // error method
+        (error: any) => {
+          console.error(error);
+        }
+      );
   }
 
-  getDocuments(): Document[] {
-    return this.documents.slice();
+  storeDocuments() {
+    const documentsString = JSON.stringify(this.documents);
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    this.http
+      .put(this.dbUrl, documentsString, { headers })
+      .subscribe(() => {
+        this.documentListChangedEvent.next(this.documents.slice());
+      });
   }
 
   getDocument(id: string): Document | null {
@@ -48,7 +74,7 @@ export class DocumentService {
     this.maxDocumentId++;
     newDocument.id = String(this.maxDocumentId);
     this.documents.push(newDocument);
-    this.documentListChangedEvent.next(this.documents.slice());
+    this.storeDocuments();
   }
 
   updateDocument(originalDocument: Document, newDocument: Document) {
@@ -61,7 +87,7 @@ export class DocumentService {
     }
     newDocument.id = originalDocument.id;
     this.documents[pos] = newDocument;
-    this.documentListChangedEvent.next(this.documents.slice());
+    this.storeDocuments();
   }
 
   deleteDocument(document: Document) {
@@ -73,6 +99,6 @@ export class DocumentService {
       return;
     }
     this.documents.splice(pos, 1);
-    this.documentListChangedEvent.next(this.documents.slice());
+    this.storeDocuments();
   }
 }
