@@ -6,8 +6,7 @@ import { Message } from './message.model';
   providedIn: 'root',
 })
 export class MessageService {
-  private dbUrl =
-    'https://wdd430-c0c69-default-rtdb.firebaseio.com/messages.json';
+  private dbUrl = 'http://localhost:3000/messages';
 
   messages: Message[] = [];
   messageChangedEvent = new EventEmitter<Message[]>();
@@ -17,11 +16,11 @@ export class MessageService {
 
   getMessages() {
     this.http
-      .get<Message[]>(this.dbUrl)
+      .get<{ message: string; messages: Message[] }>(this.dbUrl)
       .subscribe(
         // success method
-        (messages: Message[]) => {
-          this.messages = messages ?? [];
+        (responseData) => {
+          this.messages = responseData.messages ?? [];
           this.maxMessageId = this.getMaxId();
           this.messageChangedEvent.emit(this.messages.slice());
         },
@@ -30,16 +29,6 @@ export class MessageService {
           console.error(error);
         }
       );
-  }
-
-  storeMessages() {
-    const messagesString = JSON.stringify(this.messages);
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    this.http
-      .put(this.dbUrl, messagesString, { headers })
-      .subscribe(() => {
-        this.messageChangedEvent.emit(this.messages.slice());
-      });
   }
 
   getMessage(id: string): Message | null {
@@ -66,9 +55,63 @@ export class MessageService {
     if (!message) {
       return;
     }
-    this.maxMessageId++;
-    message.id = String(this.maxMessageId);
-    this.messages.push(message);
-    this.storeMessages();
+
+    // make sure id of the new Message is empty
+    message.id = '';
+
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    // add to database
+    this.http
+      .post<{ message: string; messageData: Message }>(this.dbUrl, message, {
+        headers: headers,
+      })
+      .subscribe((responseData) => {
+        this.messages.push(responseData.messageData);
+        this.messageChangedEvent.emit(this.messages.slice());
+      });
+  }
+
+  updateMessage(originalMessage: Message, newMessage: Message) {
+    if (!originalMessage || !newMessage) {
+      return;
+    }
+
+    const pos = this.messages.findIndex((m) => m.id === originalMessage.id);
+
+    if (pos < 0) {
+      return;
+    }
+
+    newMessage.id = originalMessage.id;
+    newMessage._id = originalMessage._id;
+
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    this.http
+      .put(this.dbUrl + '/' + originalMessage.id, newMessage, {
+        headers: headers,
+      })
+      .subscribe(() => {
+        this.messages[pos] = newMessage;
+        this.messageChangedEvent.emit(this.messages.slice());
+      });
+  }
+
+  deleteMessage(message: Message) {
+    if (!message) {
+      return;
+    }
+
+    const pos = this.messages.findIndex((m) => m.id === message.id);
+
+    if (pos < 0) {
+      return;
+    }
+
+    this.http.delete(this.dbUrl + '/' + message.id).subscribe(() => {
+      this.messages.splice(pos, 1);
+      this.messageChangedEvent.emit(this.messages.slice());
+    });
   }
 }

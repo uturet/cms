@@ -7,8 +7,7 @@ import { Contact } from './contact.model';
   providedIn: 'root',
 })
 export class ContactService {
-  private dbUrl =
-    'https://wdd430-c0c69-default-rtdb.firebaseio.com/contacts.json';
+  private dbUrl = 'http://localhost:3000/contacts';
 
   contacts: Contact[] = [];
   contactSelectedEvent = new EventEmitter<Contact>();
@@ -19,16 +18,13 @@ export class ContactService {
 
   getContacts() {
     this.http
-      .get<Contact[]>(this.dbUrl)
+      .get<{ message: string; contacts: Contact[] }>(this.dbUrl)
       .subscribe(
         // success method
-        (contacts: Contact[]) => {
-          this.contacts = contacts ?? [];
+        (responseData) => {
+          this.contacts = responseData.contacts ?? [];
           this.maxContactId = this.getMaxId();
-          this.contacts.sort((a, b) =>
-            a.name < b.name ? -1 : a.name > b.name ? 1 : 0
-          );
-          this.contactListChangedEvent.next(this.contacts.slice());
+          this.sortAndSend();
         },
         // error method
         (error: any) => {
@@ -37,14 +33,11 @@ export class ContactService {
       );
   }
 
-  storeContacts() {
-    const contactsString = JSON.stringify(this.contacts);
-    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    this.http
-      .put(this.dbUrl, contactsString, { headers })
-      .subscribe(() => {
-        this.contactListChangedEvent.next(this.contacts.slice());
-      });
+  sortAndSend() {
+    this.contacts.sort((a, b) =>
+      a.name < b.name ? -1 : a.name > b.name ? 1 : 0
+    );
+    this.contactListChangedEvent.next(this.contacts.slice());
   }
 
   getContact(id: string): Contact | null {
@@ -67,38 +60,67 @@ export class ContactService {
     return maxId;
   }
 
-  addContact(newContact: Contact) {
-    if (!newContact) {
+  addContact(contact: Contact) {
+    if (!contact) {
       return;
     }
-    this.maxContactId++;
-    newContact.id = String(this.maxContactId);
-    this.contacts.push(newContact);
-    this.storeContacts();
+
+    // make sure id of the new Contact is empty
+    contact.id = '';
+
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    // add to database
+    this.http
+      .post<{ message: string; contact: Contact }>(this.dbUrl, contact, {
+        headers: headers,
+      })
+      .subscribe((responseData) => {
+        this.contacts.push(responseData.contact);
+        this.sortAndSend();
+      });
   }
 
   updateContact(originalContact: Contact, newContact: Contact) {
     if (!originalContact || !newContact) {
       return;
     }
-    const pos = this.contacts.indexOf(originalContact);
+
+    const pos = this.contacts.findIndex((c) => c.id === originalContact.id);
+
     if (pos < 0) {
       return;
     }
+
     newContact.id = originalContact.id;
-    this.contacts[pos] = newContact;
-    this.storeContacts();
+    newContact._id = originalContact._id;
+
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    this.http
+      .put(this.dbUrl + '/' + originalContact.id, newContact, {
+        headers: headers,
+      })
+      .subscribe(() => {
+        this.contacts[pos] = newContact;
+        this.sortAndSend();
+      });
   }
 
   deleteContact(contact: Contact) {
     if (!contact) {
       return;
     }
-    const pos = this.contacts.indexOf(contact);
+
+    const pos = this.contacts.findIndex((c) => c.id === contact.id);
+
     if (pos < 0) {
       return;
     }
-    this.contacts.splice(pos, 1);
-    this.storeContacts();
+
+    this.http.delete(this.dbUrl + '/' + contact.id).subscribe(() => {
+      this.contacts.splice(pos, 1);
+      this.sortAndSend();
+    });
   }
 }

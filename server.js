@@ -5,9 +5,17 @@ var http = require('http'); // Node's built-in HTTP server
 var bodyParser = require('body-parser'); // parses incoming request bodies
 var cookieParser = require('cookie-parser'); // parses cookies in requests
 var logger = require('morgan'); // logs HTTP requests to the console
+var mongoose = require('mongoose'); // ODM used to talk to the MongoDB database
 
 // Create the Express application
 var app = express();
+
+// Establish a connection to the local MongoDB "cms" database.
+// Mongoose 7+ no longer accepts a callback here, so we use the promise API.
+mongoose
+  .connect('mongodb://localhost:27017/cms')
+  .then(() => console.log('Connected to database!'))
+  .catch((err) => console.log('Connection failed: ' + err));
 
 // Get the defined routing files
 var index = require('./server/routes/app'); // default route (renders the index page)
@@ -31,6 +39,24 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 // Parse cookies sent with requests
 app.use(cookieParser());
+
+// Allow the Angular dev server (localhost:4200) to call this API during
+// development (cross-origin requests). Answer pre-flight OPTIONS requests too.
+app.use(function (req, res, next) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+  );
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept'
+  );
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // Serve the static files that make up the built Angular application
 app.use(express.static(path.join(__dirname, 'dist/cms/browser')));
